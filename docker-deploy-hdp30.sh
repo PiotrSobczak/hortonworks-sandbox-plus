@@ -31,17 +31,19 @@ version=$(docker images | grep $registry/$name  | awk '{print $2}');
 docker network create cda 2>/dev/null
 
 # Create volume for postgres if does not exists
-volume_name=ambari_pgsql_volume
-echo "Checking $volume_name volume..."; docker volume inspect $volume_name || echo "volume $volume_name does not exist, creating volume..." ;docker volume create --driver local --opt type=none --opt device=$(pwd)/volumes/pgsql --opt o=bind $volume_name
+PGSQL_VOLUME=pgsql
+MYSQL_VOLUME=mysql
+HDFS_VOLUME=hdfs
 
-# Create volume for hdfs if does not exists
-volume_name=hdfs
-echo "Checking $volume_name volume..."; docker volume inspect $volume_name || echo "volume $volume_name does not exist, creating volume..." ;docker volume create --driver local --opt type=none --opt device=$(pwd)/volumes/$volume_name --opt o=bind $volume_name
+SCRIPTPATH=`realpath $0`
+SCRIPTDIR=`dirname $SCRIPTPATH`
 
-# Create volume for mysql
-mysql_volume_name=mysql
-echo "Checking $mysql_volume_name volume..."; docker volume inspect $mysql_volume_name || echo "volume $mysql_volume_name does not exist, creating volume..." ;docker volume create --driver local --opt type=none --opt device=$(pwd)/volumes/$mysql_volume_name --opt o=bind $mysql_volume_name
-
+for volume_name in $PGSQL_VOLUME $MYSQL_VOLUME $HDFS_VOLUME
+do
+    VOLUME_PATH=$SCRIPTDIR/volumes/$volume_name
+    mkdir -p $VOLUME_PATH
+    echo "Checking $volume_name volume..."; docker volume inspect $volume_name || echo "volume $volume_name does not exist, creating volume..." ;docker volume create --driver local --opt type=none --opt device=$VOLUME_PATH --opt o=bind $volume_name
+done
 
 docker run --privileged --name $name -h $hostname --network=cda --network-alias=$hostname \
 -v $(pwd)/assets/service-startup.sh:/sandbox/ambari/service-startup.sh \
@@ -49,13 +51,13 @@ docker run --privileged --name $name -h $hostname --network=cda --network-alias=
 -v $(pwd)/scripts:/var/scripts \
 -v $(pwd)/configs/hive-site.jceks:/usr/hdp/current/hive-server2/conf_llap/hive-site.jceks \
 -v $(pwd)/volumes/run:/run \
--v ambari_pgsql_volume:/var/lib/pgsql \
--v $volume_name:/hadoop/hdfs \
--v $mysql_volume_name:/var/lib/mysql \
+-v $PGSQL_VOLUME:/var/lib/pgsql \
+-v $MYSQL_VOLUME:/var/lib/mysql \
+-v $HDFS_VOLUME:/hadoop/hdfs \
 -d "$registry/$name:$version"
 
 
-#Deploy the proxy container.
+# Deploy the proxy container.
 sed 's/sandbox-hdp-security/sandbox-hdp/g' assets/generate-proxy-deploy-script.sh > assets/generate-proxy-deploy-script.sh.new
 mv -f assets/generate-proxy-deploy-script.sh.new assets/generate-proxy-deploy-script.sh
 chmod +x assets/generate-proxy-deploy-script.sh
