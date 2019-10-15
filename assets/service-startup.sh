@@ -14,9 +14,6 @@ until curl --silent -u raj_ops:raj_ops -H 'X-Requested-By:ambari' -i -X GET  htt
 rm -rf /var/run/postgresql/*
 systemctl restart postgresql-9.6.service
 
-# RESTORING AMBARI DATABASE FROM LATEST DUMP
-#/var/scripts/restore_ambari_db.sh
-
 # SETTING AMBARI ADMIN USER
 printf 'admin\nadmin' | ambari-admin-password-reset
 

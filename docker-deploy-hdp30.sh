@@ -8,7 +8,6 @@ name="sandbox-hdp"
 version="3.0.1"
 proxyName="sandbox-proxy"
 proxyVersion="1.0"
-flavor="hdp"
 
 # NO EDITS BEYOND THIS LINE
 # housekeeping
@@ -31,7 +30,7 @@ version=$(docker images | grep $registry/$name  | awk '{print $2}');
 # Create cda docker network
 docker network create cda 2>/dev/null
 
-# Create volume for postgres if does not exists
+# Create postgres, mysql and hdfs volumes
 PGSQL_VOLUME=pgsql
 MYSQL_VOLUME=mysql
 HDFS_VOLUME=hdfs
@@ -43,6 +42,7 @@ do
     echo "Checking $volume_name volume..."; docker volume inspect $volume_name || echo "volume $volume_name does not exist, creating volume..." ;docker volume create --driver local --opt type=none --opt device=$VOLUME_PATH --opt o=bind $volume_name
 done
 
+# Deploy hdp-sandbox container
 docker run --privileged --name $name -h $hostname --network=cda --network-alias=$hostname \
 -v $SCRIPTDIR/assets/service-startup.sh:/sandbox/ambari/service-startup.sh \
 -v $SCRIPTDIR/volumes/backups:/var/backups \

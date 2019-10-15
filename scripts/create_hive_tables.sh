@@ -1,1 +1,0 @@
-beeline -n hive -p hive -u "jdbc:hive2://sandbox-hdp.hortonworks.com:2181/;serviceDiscoveryMode=zooKeeper;zooKeeperNamespace=hiveserver2-hive2" -e 'create database bibd; CREATE EXTERNAL TABLE bibd.druid_olap_serwisy STORED BY "org.apache.hadoop.hive.druid.DruidStorageHandler" TBLPROPERTIES ("druid.datasource" = "olap_serwisy_hll")';
