@@ -4,6 +4,8 @@ set -x
 
 chown -R mysql:mysql /var/lib/mysql /var/run/mysqld
 
+source sandbox/ambari/config.sh
+
 # RESTARTING AMBARI AGENT AND SERVER DUE TO MOUNTING POSTGRES DIR
 systemctl restart ambari-server && systemctl restart ambari-agent
 
@@ -15,7 +17,7 @@ rm -rf /var/run/postgresql/*
 systemctl restart postgresql-9.6.service
 
 # SETTING AMBARI ADMIN USER
-printf 'admin\nadmin' | ambari-admin-password-reset
+printf "$ADMIN_PASSWORD\n$ADMIN_PASSWORD" | ambari-admin-password-reset
 
 systemctl restart ambari-server
 
@@ -23,7 +25,7 @@ systemctl restart ambari-server
 until curl --silent -u raj_ops:raj_ops -H 'X-Requested-By:ambari' -i -X GET  http://localhost:8080/api/v1/clusters/Sandbox/hosts/sandbox-hdp.hortonworks.com/host_components/ZOOKEEPER_SERVER | grep state | grep -v desired | grep INSTALLED; do sleep 5; done;
 
 # STARTING CHOSEN SERVICES
-for service in RANGER ZOOKEEPER HDFS YARN HIVE;
+for service in $SERVICES;
 do
   curl -u admin:admin -H "X-Requested-By: ambari" -X PUT -d '{"RequestInfo": {"context" :"Start '$service'"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://localhost:8080/api/v1/clusters/Sandbox/services/$service | python /sandbox/ambari/wait-until-done.py
 done

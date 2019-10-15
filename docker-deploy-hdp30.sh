@@ -45,6 +45,7 @@ done
 # Deploy hdp-sandbox container
 docker run --privileged --name $name -h $hostname --network=cda --network-alias=$hostname \
 -v $SCRIPTDIR/assets/service-startup.sh:/sandbox/ambari/service-startup.sh \
+-v $SCRIPTDIR/config.sh:/sandbox/ambari/config.sh \
 -v $SCRIPTDIR/volumes/backups:/var/backups \
 -v $SCRIPTDIR/scripts:/var/scripts \
 -v $SCRIPTDIR/configs/hive-site.jceks:/usr/hdp/current/hive-server2/conf_llap/hive-site.jceks \
