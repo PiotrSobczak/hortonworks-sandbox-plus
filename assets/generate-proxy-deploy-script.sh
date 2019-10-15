@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 
 registry="hortonworks"
-flavor=$(cat sandbox-flavor)
-if [ "$flavor" == "hdf" ]; then
- hdfEnabled=true
- hdpEnabled=false
-elif [ "$flavor" == "hdp" ]; then
- hdfEnabled=false
- hdpEnabled=true
-fi
+hdfEnabled=false
+hdpEnabled=true
 
 # Set the value to 'true' if the sandbox will be running on the VM.
 # 'false' otherwise.
@@ -35,16 +29,6 @@ httpPorts=(1080 4200 7777 7788 8000 8080 8443 8744 8886 9088 9089 61080 61888 40
 #   ports 2200/2122 are used to SSH into the host VM
 #   2181 on HDF <- 2182
 #
-tcpPortsHDF=(
-[2202]=22
-[2182]=2181
-[4557]=4557
-[6627]=6627
-[6667]=6667
-[9090]=9090
-[9091]=9091
-[15500]=15500
-)
 
 tcpPortsHDP=(
 [12049]=2049
@@ -105,41 +89,17 @@ tcpPortsHDP=(
 
 
 # Clear conf files and then recreate necessary directories
-rm -rf sandbox
-mkdir -p sandbox/proxy/conf.d
-mkdir -p sandbox/proxy/conf.stream.d
+SCRIPTPATH=`realpath $0`
+SCRIPTDIR=`dirname $SCRIPTPATH`
+absPath=`dirname $SCRIPTDIR`
 
+rm -rf $absPath/sandbox
+mkdir -p $absPath/sandbox/proxy/conf.d
+mkdir -p $absPath/sandbox/proxy/conf.stream.d
 
-if [ "$hdfEnabled" = true ]; then
-  name="sandbox-hdf-standalone-cda-ready"
-  hostname="sandbox-hdf.hortonworks.com"
-  for port in ${httpPorts[@]}; do
-    cat << EOF >> sandbox/proxy/conf.d/http-hdf.conf
-server {
-  listen $port;
-  server_name $hostname;
-  location / {
-    proxy_pass http://$name:$port;
-  }
-}
-EOF
-  done
-
-  for origin in "${!tcpPortsHDF[@]}"; do
-    cat << EOF >> sandbox/proxy/conf.stream.d/tcp-hdf.conf
-server {
-  proxy_timeout 60m;
-  listen $origin;
-  proxy_pass $name:${tcpPortsHDF[$origin]};
-}
-EOF
-  done
-fi
-
-if [ "$hdpEnabled" = true ]; then
- name="sandbox-hdp"
- hostname="sandbox-hdp.hortonworks.com"
- cat << EOF >> sandbox/proxy/conf.d/http-hdp.conf
+name="sandbox-hdp"
+hostname="sandbox-hdp.hortonworks.com"
+cat << EOF >> $absPath/sandbox/proxy/conf.d/http-hdp.conf
 map \$http_upgrade \$connection_upgrade {
  default upgrade;
  '' close;
@@ -147,7 +107,7 @@ map \$http_upgrade \$connection_upgrade {
 EOF
   for port in ${httpPorts[@]}; do
    if [ $port == '9995' ]; then
-    cat << EOF >> sandbox/proxy/conf.d/http-hdp.conf
+    cat << EOF >> $absPath/sandbox/proxy/conf.d/http-hdp.conf
 server {
   listen 9995;
   server_name sandbox-hdp.hortonworks.com;
@@ -160,7 +120,7 @@ server {
 }
 EOF
 else
- cat << EOF >> sandbox/proxy/conf.d/http-hdp.conf
+ cat << EOF >> $absPath/sandbox/proxy/conf.d/http-hdp.conf
 server {
   listen $port;
   server_name $hostname;
@@ -172,9 +132,9 @@ EOF
 fi
   done
 
-  for origin in "${!tcpPortsHDP[@]}"; do
+for origin in "${!tcpPortsHDP[@]}"; do
    if [ $origin == '2201' ] || [ $origin == '2202' ]; then
-    cat << EOF >> sandbox/proxy/conf.stream.d/tcp-hdp.conf
+    cat << EOF >> $absPath/sandbox/proxy/conf.stream.d/tcp-hdp.conf
 server {
   listen $origin;
   proxy_timeout 60m;
@@ -182,23 +142,22 @@ server {
 }
 EOF
   else
-    cat << EOF >> sandbox/proxy/conf.stream.d/tcp-hdp.conf
+    cat << EOF >> $absPath/sandbox/proxy/conf.stream.d/tcp-hdp.conf
 server {
   listen $origin;
   proxy_pass $name:${tcpPortsHDP[$origin]};
 }
 EOF
   fi
-  done
-fi
+done
+
 
 
 # Generate the appropriate 'docker run' command by finding all ports to expose
 # (found in the above lists).
 
-absPath=$(pwd)
 version=$(docker images | grep ${registry}/sandbox-proxy  | awk '{print $2}');
-cat << EOF > sandbox/proxy/proxy-deploy.sh
+cat << EOF > $absPath/sandbox/proxy/proxy-deploy.sh
 #!/usr/bin/env bash
 docker rm -f sandbox-proxy 2>/dev/null
 docker run --name sandbox-proxy --network=cda \\
@@ -208,21 +167,21 @@ docker run --name sandbox-proxy --network=cda \\
 EOF
 
 for port in ${httpPorts[@]}; do
-  cat << EOF >> sandbox/proxy/proxy-deploy.sh
+  cat << EOF >> $absPath/sandbox/proxy/proxy-deploy.sh
 -p $port:$port \\
 EOF
 done
 for port in ${!tcpPortsHDF[@]}; do
-  cat << EOF >> sandbox/proxy/proxy-deploy.sh
+  cat << EOF >> $absPath/sandbox/proxy/proxy-deploy.sh
 -p $port:$port \\
 EOF
 done
 for port in ${!tcpPortsHDP[@]}; do
-  cat << EOF >> sandbox/proxy/proxy-deploy.sh
+  cat << EOF >> $absPath/sandbox/proxy/proxy-deploy.sh
 -p $port:$port \\
 EOF
 done
 
-cat << EOF >> sandbox/proxy/proxy-deploy.sh
+cat << EOF >> $absPath/sandbox/proxy/proxy-deploy.sh
 -d ${registry}/sandbox-proxy:$version
 EOF

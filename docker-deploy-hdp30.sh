@@ -12,7 +12,6 @@ flavor="hdp"
 
 # NO EDITS BEYOND THIS LINE
 # housekeeping
-echo $flavor > sandbox-flavor
 
 SCRIPTPATH=`realpath $0`
 SCRIPTDIR=`dirname $SCRIPTPATH`
@@ -57,14 +56,14 @@ docker run --privileged --name $name -h $hostname --network=cda --network-alias=
 
 
 # Deploy the proxy container.
-sed 's/sandbox-hdp-security/sandbox-hdp/g' assets/generate-proxy-deploy-script.sh > assets/generate-proxy-deploy-script.sh.new
-mv -f assets/generate-proxy-deploy-script.sh.new assets/generate-proxy-deploy-script.sh
-chmod +x assets/generate-proxy-deploy-script.sh
-assets/generate-proxy-deploy-script.sh 2>/dev/null
+sed 's/sandbox-hdp-security/sandbox-hdp/g' $SCRIPTDIR/assets/generate-proxy-deploy-script.sh > $SCRIPTDIR/assets/generate-proxy-deploy-script.sh.new
+mv -f $SCRIPTDIR/assets/generate-proxy-deploy-script.sh.new $SCRIPTDIR/assets/generate-proxy-deploy-script.sh
+chmod +x $SCRIPTDIR/assets/generate-proxy-deploy-script.sh
+$SCRIPTDIR/assets/generate-proxy-deploy-script.sh 2>/dev/null
 
 #check to see if it's windows
 if uname | grep MINGW; then 
- sed -i -e 's/\( \/[a-z]\)/\U\1:/g' sandbox/proxy/proxy-deploy.sh
+ sed -i -e 's/\( \/[a-z]\)/\U\1:/g' $SCRIPTDIR/sandbox/proxy/proxy-deploy.sh
 fi
-chmod +x sandbox/proxy/proxy-deploy.sh 2>/dev/null
-sandbox/proxy/proxy-deploy.sh 
+chmod +x $SCRIPTDIR/sandbox/proxy/proxy-deploy.sh 2>/dev/null
+$SCRIPTDIR/sandbox/proxy/proxy-deploy.sh 
