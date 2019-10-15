@@ -11,7 +11,7 @@
 sh docker-deploy-hdp30.sh
 ```
 
-# Stopping and removing hdp sandbox and proxy
+# Cleaning hdp sandbox and proxy containers
 ```
 scripts/clean_hortonworks_containers.sh
 ```
