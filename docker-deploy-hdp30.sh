@@ -23,13 +23,7 @@ mkdir -p sandbox/proxy/conf.stream.d
 docker pull "$registry/$name:$version"
 docker pull "$registry/$proxyName:$proxyVersion"
 
-
-# start the docker container and proxy
-if [ "$flavor" == "hdf" ]; then
- hostname="sandbox-hdf.hortonworks.com"
-elif [ "$flavor" == "hdp" ]; then
- hostname="sandbox-hdp.hortonworks.com"
-fi
+hostname="sandbox-hdp.hortonworks.com"
 
 version=$(docker images | grep $registry/$name  | awk '{print $2}');
 
