@@ -1,4 +1,4 @@
-# This is basically a fork of of [hortonworks-sandbox](https://www.cloudera.com/downloads/hortonworks-sandbox/hdp.html) extended by:
+# This repository is basically a fork of of [hortonworks-sandbox](https://www.cloudera.com/downloads/hortonworks-sandbox/hdp.html) extended by:
 - Automatic setting admin password for Ambari server
 - Starting only needed services(ZOOKEEPER, RANGER, HDFS, YARN, HIVE)
 - Persistance of Ambari configuration(bind volume of postgres database directory)

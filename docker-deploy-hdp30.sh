@@ -14,10 +14,12 @@ flavor="hdp"
 # housekeeping
 echo $flavor > sandbox-flavor
 
+SCRIPTPATH=`realpath $0`
+SCRIPTDIR=`dirname $SCRIPTPATH`
 
 # create necessary folders for nginx and copy over our rule generation script there
-mkdir -p sandbox/proxy/conf.d
-mkdir -p sandbox/proxy/conf.stream.d
+mkdir -p $SCRIPTDIR/sandbox/proxy/conf.d
+mkdir -p $SCRIPTDIR/sandbox/proxy/conf.stream.d
 
 # pull and tag the sandbox and the proxy container
 docker pull "$registry/$name:$version"
@@ -35,9 +37,6 @@ PGSQL_VOLUME=pgsql
 MYSQL_VOLUME=mysql
 HDFS_VOLUME=hdfs
 
-SCRIPTPATH=`realpath $0`
-SCRIPTDIR=`dirname $SCRIPTPATH`
-
 for volume_name in $PGSQL_VOLUME $MYSQL_VOLUME $HDFS_VOLUME
 do
     VOLUME_PATH=$SCRIPTDIR/volumes/$volume_name
@@ -46,11 +45,11 @@ do
 done
 
 docker run --privileged --name $name -h $hostname --network=cda --network-alias=$hostname \
--v $(pwd)/assets/service-startup.sh:/sandbox/ambari/service-startup.sh \
--v $(pwd)/volumes/backups:/var/backups \
--v $(pwd)/scripts:/var/scripts \
--v $(pwd)/configs/hive-site.jceks:/usr/hdp/current/hive-server2/conf_llap/hive-site.jceks \
--v $(pwd)/volumes/run:/run \
+-v $SCRIPTDIR/assets/service-startup.sh:/sandbox/ambari/service-startup.sh \
+-v $SCRIPTDIR/volumes/backups:/var/backups \
+-v $SCRIPTDIR/scripts:/var/scripts \
+-v $SCRIPTDIR/configs/hive-site.jceks:/usr/hdp/current/hive-server2/conf_llap/hive-site.jceks \
+-v $SCRIPTDIR/volumes/run:/run \
 -v $PGSQL_VOLUME:/var/lib/pgsql \
 -v $MYSQL_VOLUME:/var/lib/mysql \
 -v $HDFS_VOLUME:/hadoop/hdfs \
